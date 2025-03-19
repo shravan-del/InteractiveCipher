@@ -1,23 +1,41 @@
-import os
 import gradio as gr
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import RedirectResponse
+import uvicorn
 
+# ✅ Initialize FastAPI
 app = FastAPI()
 
-# Define Gradio Interface
-def interactive_cypher(input_text):
-    return f"Processing: {input_text}"
+# ✅ Enable CORS (Prevents loading issues)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-interface = gr.Interface(fn=interactive_cypher, inputs="text", outputs="text")
+# ✅ Define Gradio Interface
+def interactive_function(input_text):
+    return f"You entered: {input_text}"
 
+demo = gr.Interface(
+    fn=interactive_function,
+    inputs=gr.Textbox(label="Enter Text"),
+    outputs=gr.Textbox(label="Output"),
+    title="Interactive Cypher",
+    theme="default"
+)
+
+# ✅ Redirect `/` to `/gradio`
 @app.get("/")
-def home():
-    return {"message": "Interactive Cypher is running!"}
+async def redirect_to_gradio():
+    return RedirectResponse(url="/gradio")
 
-@app.get("/gradio")
-def launch_gradio():
-    return interface.launch(share=True)
+# ✅ Mount Gradio app under `/gradio`
+app.mount("/gradio", gr.mount_gradio_app(app, demo, path="/gradio"))
 
+# ✅ Run FastAPI & Gradio Together
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+    uvicorn.run(app, host="0.0.0.0", port=8080)

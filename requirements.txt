@@ -1,0 +1,9 @@
+gradio==5.21.0
+fastapi
+uvicorn
+numpy
+pandas
+matplotlib
+torch
+transformers
+asyncpraw
